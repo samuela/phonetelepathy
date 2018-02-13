@@ -5,7 +5,6 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
-import android.media.audiofx.AutomaticGainControl;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -24,100 +23,141 @@ import static android.media.AudioTrack.*;
 
 public class MainActivity extends AppCompatActivity {
     private static final int SAMPLE_RATE = 44100;
-    private static final int SAMPLES_PER_BLOCK = 500;
-//    private static final int PREAMBLE_SAMPLE_GAP = 0;
-//    private static final int START_GAP = 500;
-//    private static final int NUM_PREAMBLES = 1;
-    private static final int FREQUENCY_0 = 2000;
-    private static final int FREQUENCY_1 = 5000;
-    private static final int MAX_RECV_SAMPLES = SAMPLE_RATE * 30;
+    private static final int CARRIER_FREQUENCY = 10000;
+    private static final int SAMPLES_PER_BLOCK = 50;
+    private static final int PREAMBLE_SAMPLE_GAP = 0;
+    private static final int NUM_PREAMBLES = 1;
 
     private static final boolean[] BARKER13 = {true, true, true, true, true, false, false, true, true, false, true, false, true};
 
+//    private TextView mTextMessage;
+
     private AudioRecord recorder;
 
+//    private AudioTrack track;
+
+//    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+//            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+//
+//        @Override
+//        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+//            switch (item.getItemId()) {
+//                case R.id.navigation_sender:
+//                    mTextMessage.setText("Send");
+//                    return true;
+//                case R.id.navigation_receiver:
+//                    mTextMessage.setText("Receive");
+//                    return true;
+//            }
+//            return false;
+//        }
+//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        mTextMessage = findViewById(R.id.message);
+//        int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
+//        int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
+
+//        int duration = SAMPLE_RATE * 5;
+//        this.track = new AudioTrack(
+////                AudioManager.STREAM_SYSTEM,
+//                AudioManager.STREAM_MUSIC,
+//                SAMPLE_RATE,
+//                channelConfig,
+//                audioFormat,
+////                AudioTrack.getMinBufferSize(SAMPLE_RATE, channelConfig, audioFormat) * 1000,
+////                1024 * 1024,
+//                duration * 2,
+//                MODE_STATIC);
+//
+//        this.track.setStereoVolume(getMaxVolume(), getMaxVolume());
+//
+//        final float frequency = 1500;
+//        // angular increment for each sample
+//        float increment = (float) (2 * Math.PI) * frequency / SAMPLE_RATE;
+//        short samples[] = new short[SAMPLE_RATE * 5];
+//
+//        for (int i = 0; i < samples.length; i++) {
+//            float v = (float) Math.sin(i * increment);
+//            samples[i] = (short) (v * Short.MAX_VALUE);
+//        }
+//
+//        track.write(samples, 0, samples.length);
+//        this.track.play();
     }
 
     private void writeQAM(short[] buffer, int start, int length, float i, float q, float f0) {
         double norm = Math.sqrt(i * i + q * q);
-        double poop = ((double) length) / 2;
         for (int j = 0; j < length; j++) {
             double x = 2 * Math.PI * f0 * j / SAMPLE_RATE;
             double v = i * Math.cos(x) - q * Math.sin(x);
-            double window = (1 - Math.abs(j - poop) / poop);
-            buffer[start + j] = (short) (v * window / norm * Short.MAX_VALUE);
+            buffer[start + j] = (short) (v / norm * Short.MAX_VALUE);
         }
     }
 
     private void barker13Preamble(short[] buffer, int start) {
-//        for (int i = 0; i < BARKER13.length; i++) {
-//            if (BARKER13[i]) {
-//                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 1, CARRIER_FREQUENCY);
-//            } else {
-//                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, -1, -1, CARRIER_FREQUENCY);
-//            }
-//        }
-
         for (int i = 0; i < BARKER13.length; i++) {
             if (BARKER13[i]) {
-                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_1);
+                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 1, CARRIER_FREQUENCY);
             } else {
-                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_0);
+                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, -1, -1, CARRIER_FREQUENCY);
             }
         }
     }
 
-//    private void QAM4(short[] buffer, int start, byte[] msg, int blockLength) {
-//        int ix = start;
-//        for (int i = 0; i < msg.length; i++) {
-//            byte b = msg[i];
-//
-//            int b1 = (b & 0b00000011);
-//            int b2 = (b & 0b00001100) >>> 2;
-//            int b3 = (b & 0b00110000) >>> 4;
-//            int b4 = (b & 0b11000000) >>> 6;
-//
-//            byte imask = 0b00000010;
-//            int i1 = ((b1 & imask) >>> 1) * 2 - 1;
-//            int i2 = ((b2 & imask) >>> 1) * 2 - 1;
-//            int i3 = ((b3 & imask) >>> 1) * 2 - 1;
-//            int i4 = ((b4 & imask) >>> 1) * 2 - 1;
-//
-//            byte qmask = 0b00000001;
-//            int q1 = (b1 & qmask) * 2 - 1;
-//            int q2 = (b2 & qmask) * 2 - 1;
-//            int q3 = (b3 & qmask) * 2 - 1;
-//            int q4 = (b4 & qmask) * 2 - 1;
-//
-//            writeQAM(buffer, ix, blockLength, i1, q1, CARRIER_FREQUENCY);
-//            ix += blockLength;
-//            writeQAM(buffer, ix, blockLength, i2, q2, CARRIER_FREQUENCY);
-//            ix += blockLength;
-//            writeQAM(buffer, ix, blockLength, i3, q3, CARRIER_FREQUENCY);
-//            ix += blockLength;
-//            writeQAM(buffer, ix, blockLength, i4, q4, CARRIER_FREQUENCY);
-//            ix += blockLength;
-//        }
-//    }
+    private void QAM4(short[] buffer, int start, byte[] msg, int blockLength) {
+        int ix = start;
+        for (int i = 0; i < msg.length; i++) {
+            byte b = msg[i];
+
+            int b1 = (b & 0b00000011);
+            int b2 = (b & 0b00001100) >>> 2;
+            int b3 = (b & 0b00110000) >>> 4;
+            int b4 = (b & 0b11000000) >>> 6;
+
+            byte imask = 0b00000010;
+            int i1 = ((b1 & imask) >>> 1) * 2 - 1;
+            int i2 = ((b2 & imask) >>> 1) * 2 - 1;
+            int i3 = ((b3 & imask) >>> 1) * 2 - 1;
+            int i4 = ((b4 & imask) >>> 1) * 2 - 1;
+
+            byte qmask = 0b00000001;
+            int q1 = (b1 & qmask) * 2 - 1;
+            int q2 = (b2 & qmask) * 2 - 1;
+            int q3 = (b3 & qmask) * 2 - 1;
+            int q4 = (b4 & qmask) * 2 - 1;
+
+//            System.out.println(Integer.toBinaryString(b));
+//            System.out.println(i1 + ", " + q1);
+//            System.out.println(i2 + ", " + q2);
+//            System.out.println(i3 + ", " + q3);
+//            System.out.println(i4 + ", " + q4);
+
+            writeQAM(buffer, ix, blockLength, i1, q1, CARRIER_FREQUENCY);
+            ix += blockLength;
+            writeQAM(buffer, ix, blockLength, i2, q2, CARRIER_FREQUENCY);
+            ix += blockLength;
+            writeQAM(buffer, ix, blockLength, i3, q3, CARRIER_FREQUENCY);
+            ix += blockLength;
+            writeQAM(buffer, ix, blockLength, i4, q4, CARRIER_FREQUENCY);
+            ix += blockLength;
+        }
+    }
 
     private short[] constructSignal(byte[] msg) {
-//        int numMsgSamples = msg.length * 8 / 2 * SAMPLES_PER_BLOCK;
-//        short[] buffer = new short[(BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP) * NUM_PREAMBLES + numMsgSamples];
-//        for (int i = 0; i < NUM_PREAMBLES; i++) {
-//            // Leave the next PREAMBLE_SAMPLE_GAP samples to just be zero.
-//            barker13Preamble(buffer, (BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP) * i);
-//        }
+        int numMsgSamples = msg.length * 8 / 2 * SAMPLES_PER_BLOCK;
+        short[] buffer = new short[(BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP) * NUM_PREAMBLES + numMsgSamples];
+        for (int i = 0; i < NUM_PREAMBLES; i++) {
+            // Leave the next PREAMBLE_SAMPLE_GAP samples to just be zero.
+            barker13Preamble(buffer, (BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP) * i);
+        }
 
-        short[] buffer = new short[BARKER13.length * SAMPLES_PER_BLOCK];
-//        writeQAM(buffer, 0, 0, 1, 0, 1500);
-        barker13Preamble(buffer, 0);
-
-//        QAM4(buffer, BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP, msg, SAMPLES_PER_BLOCK);
+        QAM4(buffer, BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP, msg, SAMPLES_PER_BLOCK);
         return buffer;
     }
 
@@ -130,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
 //        short[] audioSignal = QAM4(messageBytes, SAMPLES_PER_BLOCK);
 
 //        short[] audioSignal = constructSignal(messageBytes);
-        short[] audioSignal = constructSignal(new byte[] {});
+//        short[] audioSignal = constructSignal(new byte[] {});
 
 //        short[] audioSignal = new short[SAMPLE_RATE];
 //        writeQAM(audioSignal, 0, 11025, 1, 1, 500);
@@ -138,17 +178,9 @@ public class MainActivity extends AppCompatActivity {
 //        writeQAM(audioSignal, 22050, 11025, -1, -1, 500);
 //        writeQAM(audioSignal, 33075, 11025, 1, -1, 500);
 
-//        short[] audioSignal = new short[44100];
-//        for (int i = 0; i < 100; i++) {
-//            writeQAM(audioSignal, 441 * i, 441, 1, 0, 120 * i + 500);
-//        }
-//        for (int i = 0; i < 8; i++) {
-//            writeQAM(audioSignal, 5000 * i, 5000, 1, 0, 1000 * i + 1000);
-//        }
-//        writeQAM(audioSignal, 0, 11025, 1, 0, 500);
-//        writeQAM(audioSignal, 11025, 11025, 1, 0, 5000);
-//        writeQAM(audioSignal, 22050, 11025, 1, 0, 10000);
-//        writeQAM(audioSignal, 33075, 11025, 1, 0, 15000);
+        short[] audioSignal = new short[22050];
+        writeQAM(audioSignal, 0, 11025, 1, 0, 500);
+        writeQAM(audioSignal, 11025, 11025, -1, 0, 500);
 
 //        try {
 //            File file = File.createTempFile("sent", "stuff");
@@ -244,11 +276,6 @@ public class MainActivity extends AppCompatActivity {
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 2 * numSamples);
-
-//        int sessionId = this.recorder.getAudioSessionId();
-//        AutomaticGainControl agc = AutomaticGainControl.create(sessionId);
-//        agc.setEnabled(false);
-
         this.recorder.startRecording();
     }
 
@@ -282,26 +309,10 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        short[] preamble = new short[BARKER13.length * SAMPLES_PER_BLOCK];
-        barker13Preamble(preamble, 0);
 
-        float[] floatPreamble = shortsToFloats(preamble);
-
-        try {
-            File file = File.createTempFile("truepreamble", "");
-            OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(file));
-            for (int i = 0; i < preamble.length; i++) {
-                osw.write(Float.toString(preamble[i]));
-                osw.write("\n");
-            }
-            osw.flush();
-            file.setReadable(true, false);
-            System.out.println(file.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
 //        short[] preamble = new short[(BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP) * NUM_PREAMBLES];
+//        barker13Preamble(preamble, 0);
 //        for (int i = 0; i < NUM_PREAMBLES; i++) {
 //            // Leave the next PREAMBLE_SAMPLE_GAP samples to just be zero.
 //            barker13Preamble(preamble, (BARKER13.length * SAMPLES_PER_BLOCK + PREAMBLE_SAMPLE_GAP) * i);
@@ -312,11 +323,9 @@ public class MainActivity extends AppCompatActivity {
 //            float v = ((float) preamble[i]) / Short.MAX_VALUE;
 //            trueCorrelation += v * v;
 //        }
-
-        System.out.println("Searching for preamble");
-
-        float[] corrs = new float[signal.length - preamble.length];
-        for (int i = 0; i < signal.length - preamble.length; i++) {
+//
+//        System.out.println("Searching for preamble");
+//        for (int i = 0; i < signal.length - preamble.length; i++) {
 //            float minSignal = Short.MAX_VALUE;
 //            float maxSignal = Short.MIN_VALUE;
 //            for (int j = 0; j < preamble.length; j++) {
@@ -328,39 +337,18 @@ public class MainActivity extends AppCompatActivity {
 //                    maxSignal = v;
 //                }
 //            }
+//
 //            float correlation = 0;
 //            for (int j = 0; j < preamble.length; j++) {
-//                correlation += floatSignal[j] * ((((float) signal[i + j]) - minSignal) / (maxSignal - minSignal) * 2 - 1);
+//                correlation += (((float) preamble[j]) / Short.MAX_VALUE) * ((((float) signal[i + j]) - minSignal) / (maxSignal - minSignal) * 2 - 1);
 //            }
-
-            float correlation = 0;
-            for (int j = 0; j < preamble.length; j++) {
-                correlation += floatPreamble[j] * floatSignal[i + j];
-            }
-            corrs[i] = correlation;
 //            if (correlation / trueCorrelation > 0.1) {
 //                System.out.print(i + ": ");
 //                System.out.println(correlation / trueCorrelation);
 //            }
-        }
-        System.out.println("... and done.");
-
-        System.out.println("Saving correlations file...");
-        try {
-            File file = File.createTempFile("correlation", "");
-            OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(file));
-            for (int i = 0; i < corrs.length; i++) {
-                osw.write(Float.toString(corrs[i]));
-                osw.write("\n");
-            }
-            osw.flush();
-            file.setReadable(true, false);
-            System.out.println(file.getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("... and done.");
-
+//        }
+//        System.out.println("... and done.");
+//
 //        int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
 //        int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 //
