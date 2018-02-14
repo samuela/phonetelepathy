@@ -13,9 +13,8 @@ import android.widget.EditText;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.nio.ShortBuffer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.concurrent.BlockingDeque;
 
 import static android.media.AudioTrack.MODE_STATIC;
 import static android.media.AudioTrack.OnPlaybackPositionUpdateListener;
@@ -23,9 +22,9 @@ import static android.media.AudioTrack.getMaxVolume;
 
 public class MainActivity extends AppCompatActivity {
     private static final int SAMPLE_RATE = 44100;
-    private static final int SAMPLES_PER_BLOCK = 500;
+    private static final int SAMPLES_PER_BLOCK = 99;
 //    private static final int FREQUENCY_0 = 3000;
-    private static final int FREQUENCY_1 = 4000;
+    private static final int FREQUENCY_1 = 2000;
     private static final int RECORDER_BUFFER_SIZE_BYTES = 2 * SAMPLE_RATE;
     private static final int PREAMBLE_SEARCH_LENGTH = SAMPLE_RATE * 3;
 
@@ -51,19 +50,19 @@ public class MainActivity extends AppCompatActivity {
 
 //        short[] freq0Env = new short[SAMPLES_PER_BLOCK];
 //        short[] freq1Env = new short[SAMPLES_PER_BLOCK];
-//        writeQAM(freq0Env, 0, freq0Env.length, 1, 0, FREQUENCY_0);
-//        writeQAM(freq1Env, 0, freq1Env.length, 1, 0, FREQUENCY_1);
+//        writeAMSignal(freq0Env, 0, freq0Env.length, 1, 0, FREQUENCY_0);
+//        writeAMSignal(freq1Env, 0, freq1Env.length, 1, 0, FREQUENCY_1);
 
 //        FREQUENCY_0_ENVELOPE = shortsToFloats(freq0Env);
 //        FREQUENCY_1_ENVELOPE = shortsToFloats(freq1Env);
     }
 
-    private void writeQAM(short[] buffer, int start, int length, float i, float q, float f0) {
+    private void writeAMSignal(short[] buffer, int start, int length, float i, float f0) {
 //        double norm = Math.sqrt(i * i + q * q);
         double poop = ((double) length) / 2;
         for (int j = 0; j < length; j++) {
-            double x = 2 * Math.PI * f0 * j / SAMPLE_RATE;
-            double v = i * Math.cos(x) - q * Math.sin(x);
+            double x = 2 * Math.PI * f0 * (j - poop) / SAMPLE_RATE;
+            double v = i * Math.cos(x);
             double window = (1 - Math.abs(j - poop) / poop);
 //            buffer[start + j] = (short) (v * window / norm * Short.MAX_VALUE);
             buffer[start + j] = (short) (v * window * Short.MAX_VALUE);
@@ -73,9 +72,9 @@ public class MainActivity extends AppCompatActivity {
 //    private void barker13PreambleFM(short[] buffer, int start) {
 //        for (int i = 0; i < BARKER13.length; i++) {
 //            if (BARKER13[i]) {
-//                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_1);
+//                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_1);
 //            } else {
-//                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_0);
+//                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_0);
 //            }
 //        }
 //    }
@@ -83,9 +82,9 @@ public class MainActivity extends AppCompatActivity {
     private void barker13PreambleAM(short[] buffer, int start) {
         for (int i = 0; i < BARKER13.length; i++) {
             if (BARKER13[i]) {
-                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, HIGH_AMPLITUDE, 0, FREQUENCY_1);
+                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, HIGH_AMPLITUDE, FREQUENCY_1);
             } else {
-                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, LOW_AMPLITUDE, 0, FREQUENCY_1);
+                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, LOW_AMPLITUDE, FREQUENCY_1);
             }
         }
     }
@@ -94,9 +93,9 @@ public class MainActivity extends AppCompatActivity {
 //        for (int i = 0; i < 8; i++) {
 //            int bit = (byt >> (7 - i)) & 1;
 //            if (bit == 1) {
-//                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_1);
+//                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_1);
 //            } else {
-//                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_0);
+//                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, 1, 0, FREQUENCY_0);
 //            }
 //        }
 //    }
@@ -105,9 +104,9 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < 8; i++) {
             int bit = (byt >> (7 - i)) & 1;
             if (bit == 1) {
-                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, HIGH_AMPLITUDE, 0, FREQUENCY_1);
+                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, HIGH_AMPLITUDE, FREQUENCY_1);
             } else {
-                writeQAM(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, LOW_AMPLITUDE, 0, FREQUENCY_1);
+                writeAMSignal(buffer, start + i * SAMPLES_PER_BLOCK, SAMPLES_PER_BLOCK, LOW_AMPLITUDE, FREQUENCY_1);
             }
         }
     }
@@ -126,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
         current_ix += preambleNumSamples;
 
         // Write the number of bytes to follow
-        writeSignalByteAM(buffer, current_ix, (byte) (msg.length & (0xFF << 8)));
+        writeSignalByteAM(buffer, current_ix, (byte) ((msg.length >>> 8) & 0xFF));
         current_ix += 8 * SAMPLES_PER_BLOCK;
         writeSignalByteAM(buffer, current_ix, (byte) (msg.length & 0xFF));
         current_ix += 8 * SAMPLES_PER_BLOCK;
@@ -143,6 +142,9 @@ public class MainActivity extends AppCompatActivity {
         EditText editText = findViewById(R.id.editText2);
         String message = editText.getText().toString();
         byte[] messageBytes = message.getBytes(CHARSET);
+
+        System.out.print("True message length (in bytes): ");
+        System.out.println(messageBytes.length);
 
         short[] audioSignal = constructSignal(messageBytes);
 //        short[] audioSignal = constructSignal(new byte[] {});
@@ -183,6 +185,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickReceive(View view) {
+        EditText editText = findViewById(R.id.editText2);
+        editText.setText("");
+
         // Only start recording if we are not already.
         if (recordingAsyncTask == null) {
             // Clear the previously accumulated recording data.
@@ -309,23 +314,9 @@ public class MainActivity extends AppCompatActivity {
             this.recordingAsyncTask.cancel(true);
             this.recordingAsyncTask = null;
 
-//            ByteArrayOutputStream _bos = new ByteArrayOutputStream();
-//            byte[] _buffer = {0, (byte) 0xFF};
-//            _bos.write(_buffer, 0, _buffer.length);
-//            Arrays.toString(_bos.toByteArray());
-
-//            byte[] outputStreamByteArray = outputStream.toByteArray();
-//            System.out.println(Arrays.toString(outputStreamByteArray));
-//            short[] signal = new short[outputStreamByteArray.length / 2];
-//            ByteBuffer.wrap(outputStreamByteArray).asShortBuffer().get(signal);
-//            System.out.println(Arrays.toString(signal));
-//            float[] floatSignal = shortsToFloats(signal);
-
             byte[] outputStreamByteArray = outputStream.toByteArray();
-//            System.out.println(Arrays.toString(outputStreamByteArray));
             short[] signal = new short[outputStreamByteArray.length / 2];
             ByteBuffer.wrap(outputStreamByteArray).asShortBuffer().get(signal);
-//            System.out.println(Arrays.toString(signal));
             float[] floatSignal = shortsToFloats(signal);
 
             // TODO perhaps calculate this ahead of time.
@@ -391,10 +382,33 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(messageLength);
             System.out.println("Demodulating...");
             byte[] recvBytes = new byte[messageLength];
-            int messageLengthFixed = Math.min(messageLength, (floatSignal.length - current_ix) / (8 * SAMPLES_PER_BLOCK));
-            for (int i = 0; i < messageLengthFixed; i++) {
+            int maxBytes = (floatSignal.length - current_ix) / (8 * SAMPLES_PER_BLOCK);
+            if (messageLength > maxBytes) {
+                System.out.println("MESSAGE LENGTH IS DEF WRONG");
+                System.out.print("Length reported: ");
+                System.out.println(messageLength);
+                System.out.print("Maximum possible: ");
+                System.out.println(maxBytes);
+
+                EditText editText = findViewById(R.id.editText2);
+                editText.setText("MESSAGE LENGTH IS DEF WRONG");
+
+                return;
+            }
+//            int messageLengthFixed = Math.min(messageLength, maxBytes);
+            for (int i = 0; i < messageLength; i++) {
                 recvBytes[i] = readSignalByteAM(floatSignal, current_ix, amplitudeThreshold);
-                current_ix += 8 * SAMPLES_PER_BLOCK;
+
+                int peak_ix = current_ix + 8 * SAMPLES_PER_BLOCK;
+                float maxPeakValue = 0;
+                for (int j = current_ix + 7 * SAMPLES_PER_BLOCK + SAMPLES_PER_BLOCK / 4; j < current_ix + 8 * SAMPLES_PER_BLOCK - SAMPLES_PER_BLOCK / 4; j++) {
+                    if (floatSignal[j] > maxPeakValue) {
+                        peak_ix = j;
+                        maxPeakValue = floatSignal[j];
+                    }
+                }
+//                current_ix += 8 * SAMPLES_PER_BLOCK;
+                current_ix = peak_ix + (SAMPLES_PER_BLOCK / 2);
             }
             System.out.println("... and done");
 
