@@ -22,13 +22,13 @@ import static android.media.AudioTrack.getMaxVolume;
 
 public class MainActivity extends AppCompatActivity {
     private static final int SAMPLE_RATE = 44100;
-    private static final int SAMPLES_PER_BLOCK = 99;
+    private static final int SAMPLES_PER_BLOCK = 151;
 //    private static final int FREQUENCY_0 = 3000;
     private static final int FREQUENCY_1 = 2000;
     private static final int RECORDER_BUFFER_SIZE_BYTES = 2 * SAMPLE_RATE;
     private static final int PREAMBLE_SEARCH_LENGTH = SAMPLE_RATE * 3;
 
-    private static final float LOW_AMPLITUDE = (float) 0.1;
+    private static final float LOW_AMPLITUDE = (float) 0.01;
     private static final float HIGH_AMPLITUDE = 1;
 
 //    private static float[] FREQUENCY_0_ENVELOPE;
@@ -37,6 +37,104 @@ public class MainActivity extends AppCompatActivity {
     private static Charset CHARSET = Charset.forName("ASCII");
 
     private static final boolean[] BARKER13 = {true, true, true, true, true, false, false, true, true, false, true, false, true};
+    private static final int PREAMPLE_GAP = 8 * SAMPLES_PER_BLOCK;
+
+    private static final String biggie = "Fuck all you hoes\n" +
+            "Get a grip motherfucker.\n" +
+            "\n" +
+            "Yeah, this album is dedicated to all the teachers that told me\n" +
+            "I'd never amount to nothin', to all the people that lived above the\n" +
+            "buildings that I was hustlin' in front of that called the police on\n" +
+            "me when I was just tryin' to make some money to feed my daughter,\n" +
+            "and all the niggas in the struggle, you know what I'm sayin'?\n" +
+            "\n" +
+            "Uh-ha, it's all good baby bay-bee, uh\n" +
+            "\n" +
+            "It was all a dream\n" +
+            "I used to read Word Up magazine\n" +
+            "Salt'n'Pepa and Heavy D up in the limousine\n" +
+            "Hangin' pictures on my wall\n" +
+            "Every Saturday Rap Attack, Mr. Magic, Marley Marl\n" +
+            "I let my tape rock 'til my tape pop\n" +
+            "Smokin' weed and bamboo, sippin' on private stock\n" +
+            "Way back, when I had the red and black lumberjack\n" +
+            "With the hat to match\n" +
+            "Remember Rappin' Duke, duh-ha, duh-ha\n" +
+            "You never thought that hip hop would take it this far\n" +
+            "Now I'm in the limelight 'cause I rhyme tight\n" +
+            "Time to get paid, blow up like the World Trade\n" +
+            "Born sinner, the opposite of a winner\n" +
+            "Remember when I used to eat sardines for dinner\n" +
+            "Peace to Ron G, Brucey B, Kid Capri\n" +
+            "Funkmaster Flex, Lovebug Starsky\n" +
+            "I'm blowin' up like you thought I would\n" +
+            "Call the crib, same number same hood\n" +
+            "It's all good\n" +
+            "\n" +
+            "Uh, and if you don't know, now you know, nigga, uh\n" +
+            "\n" +
+            "You know very well who you are\n" +
+            "Don't let em hold you down, reach for the stars\n" +
+            "You had a goal, but not that many\n" +
+            "'cause you're the only one I'll give you good and plenty\n" +
+            "\n" +
+            "I made the change from a common thief\n" +
+            "To up close and personal with Robin Leach\n" +
+            "And I'm far from cheap, I smoke skunk with my peeps all day\n" +
+            "Spread love, it's the Brooklyn way\n" +
+            "The Moet and Alize keep me pissy\n" +
+            "Girls used to diss me\n" +
+            "Now they write letters 'cause they miss me\n" +
+            "I never thought it could happen, this rappin' stuff\n" +
+            "I was too used to packin' gats and stuff\n" +
+            "Now honies play me close like butter played toast\n" +
+            "From the Mississippi down to the east coast\n" +
+            "Condos in Queens, indo for weeks\n" +
+            "Sold out seats to hear Biggie Smalls speak\n" +
+            "Livin' life without fear\n" +
+            "Puttin' 5 karats in my baby girl's ear\n" +
+            "Lunches, brunches, interviews by the pool\n" +
+            "Considered a fool 'cause I dropped out of high school\n" +
+            "Stereotypes of a black male misunderstood\n" +
+            "And it's still all good\n" +
+            "\n" +
+            "Uh...and if you don't know, now you know, nigga\n" +
+            "\n" +
+            "You know very well who you are\n" +
+            "Don't let em hold you down, reach for the stars\n" +
+            "You had a goal, but not that many\n" +
+            "'cause you're the only one I'll give you good and plenty\n" +
+            "\n" +
+            "Super Nintendo, Sega Genesis\n" +
+            "When I was dead broke, man I couldn't picture this\n" +
+            "50 inch screen, money green leather sofa\n" +
+            "Got two rides, a limousine with a chauffeur\n" +
+            "Phone bill about two G's flat\n" +
+            "No need to worry, my accountant handles that\n" +
+            "And my whole crew is loungin'\n" +
+            "Celebratin' every day, no more public housin'\n" +
+            "Thinkin' back on my one-room shack\n" +
+            "Now my mom pimps a Ac' with minks on her back\n" +
+            "And she loves to show me off, of course\n" +
+            "Smiles every time my face is up in The Source\n" +
+            "We used to fuss when the landlord dissed us\n" +
+            "No heat, wonder why Christmas missed us\n" +
+            "Birthdays was the worst days\n" +
+            "Now we sip champagne when we thirst-ay\n" +
+            "Uh, damn right I like the life I live\n" +
+            "'Cause I went from negative to positive\n" +
+            "And it's all...\n" +
+            "\n" +
+            "It's all good\n" +
+            "\n" +
+            "...and if you don't know, now you know, nigga, uh\n" +
+            "Uh, uh...and if you don't know, now you know, nigga\n" +
+            "Uh...and if you don't know, now you know, nigga, uh\n" +
+            "\n" +
+            "Representin' B-Town in the house, Junior Mafia, mad flavor, uh\n" +
+            "Uh, yeah, a-ight\n" +
+            "\n";
+//    private static final byte[] biggie = {0x45, 0x24, }
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -47,6 +145,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        EditText editText = findViewById(R.id.editText2);
+        editText.setText(biggie);
 
 //        short[] freq0Env = new short[SAMPLES_PER_BLOCK];
 //        short[] freq1Env = new short[SAMPLES_PER_BLOCK];
@@ -117,12 +218,12 @@ public class MainActivity extends AppCompatActivity {
         int preambleNumSamples = BARKER13.length * SAMPLES_PER_BLOCK;
         int lengthNumSamples = 2 * 8 * SAMPLES_PER_BLOCK;
         int msgNumSamples = 8 * msg.length * SAMPLES_PER_BLOCK;
-        short[] buffer = new short[preambleNumSamples + lengthNumSamples + msgNumSamples];
+        short[] buffer = new short[preambleNumSamples + PREAMPLE_GAP + lengthNumSamples + msgNumSamples];
 
         // Write the preamble
         int current_ix = 0;
         barker13PreambleAM(buffer, 0);
-        current_ix += preambleNumSamples;
+        current_ix += preambleNumSamples + PREAMPLE_GAP;
 
         // Write the number of bytes to follow
         writeSignalByteAM(buffer, current_ix, (byte) ((msg.length >>> 8) & 0xFF));
@@ -309,6 +410,19 @@ public class MainActivity extends AppCompatActivity {
         return (byte) res;
     }
 
+    private double bitErrorRate(byte[] truth, byte[] recv) {
+        int correct = 0;
+        for (int i = 0; i < Math.min(truth.length, recv.length); i++) {
+            int diff = (truth[i] & 0xFF) ^ (recv[i] & 0xFF);
+            for (int j = 0; j < 8; j++) {
+                if (((1 << j) & diff) == 0) {
+                    correct += 1;
+                }
+            }
+        }
+        return 1 - ((double) correct) / ((double) Math.max(truth.length, recv.length) * 8);
+    }
+
     public void onClickFinish(View view) {
         if (this.recordingAsyncTask != null) {
             this.recordingAsyncTask.cancel(true);
@@ -365,7 +479,7 @@ public class MainActivity extends AppCompatActivity {
             System.out.print("current_ix before");
             System.out.println(current_ix);
 
-            current_ix = best_start_ix + floatPreamble.length;
+            current_ix = best_start_ix + floatPreamble.length + PREAMPLE_GAP;
             System.out.print("current_ix after");
             System.out.println(current_ix);
 
@@ -396,25 +510,35 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 //            int messageLengthFixed = Math.min(messageLength, maxBytes);
+
+            int searchWindowSize = 11;
             for (int i = 0; i < messageLength; i++) {
                 recvBytes[i] = readSignalByteAM(floatSignal, current_ix, amplitudeThreshold);
 
-                int peak_ix = current_ix + 8 * SAMPLES_PER_BLOCK;
-                float maxPeakValue = 0;
-                for (int j = current_ix + 7 * SAMPLES_PER_BLOCK + SAMPLES_PER_BLOCK / 4; j < current_ix + 8 * SAMPLES_PER_BLOCK - SAMPLES_PER_BLOCK / 4; j++) {
-                    if (floatSignal[j] > maxPeakValue) {
-                        peak_ix = j;
-                        maxPeakValue = floatSignal[j];
+                // Only perform clock skew correction if the last bit was high.
+                if ((recvBytes[i] & 0x01) == 1) {
+                    int peak_ix = current_ix + 8 * SAMPLES_PER_BLOCK;
+                    float maxPeakValue = 0;
+                    for (int j = current_ix + 7 * SAMPLES_PER_BLOCK + (SAMPLES_PER_BLOCK - searchWindowSize) / 2; j < current_ix + 8 * SAMPLES_PER_BLOCK - (SAMPLES_PER_BLOCK - searchWindowSize) / 2; j++) {
+                        if (floatSignal[j] > maxPeakValue) {
+                            peak_ix = j;
+                            maxPeakValue = floatSignal[j];
+                        }
                     }
+                    current_ix = peak_ix + (SAMPLES_PER_BLOCK / 2);
+                } else {
+                    current_ix += 8 * SAMPLES_PER_BLOCK;
                 }
-//                current_ix += 8 * SAMPLES_PER_BLOCK;
-                current_ix = peak_ix + (SAMPLES_PER_BLOCK / 2);
             }
             System.out.println("... and done");
 
             String recvMessage = new String(recvBytes, CHARSET);
             EditText editText = findViewById(R.id.editText2);
             editText.setText(recvMessage);
+
+            byte[] biggieBytes = biggie.getBytes(CHARSET);
+            System.out.print("Biggie bit error rate is: ");
+            System.out.println(bitErrorRate(biggieBytes, recvBytes));
         }
 
 //        try {
